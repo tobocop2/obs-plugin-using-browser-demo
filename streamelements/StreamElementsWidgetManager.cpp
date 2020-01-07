@@ -7,16 +7,13 @@
 
 #include <QApplication>
 
-StreamElementsWidgetManager::StreamElementsWidgetManager(QMainWindow* parent) :
-	m_parent(parent),
-	m_nativeCentralWidget(nullptr)
+StreamElementsWidgetManager::StreamElementsWidgetManager(QMainWindow *parent)
+	: m_parent(parent), m_nativeCentralWidget(nullptr)
 {
 	assert(parent);
 }
 
-StreamElementsWidgetManager::~StreamElementsWidgetManager()
-{
-}
+StreamElementsWidgetManager::~StreamElementsWidgetManager() {}
 
 //
 // The QApplication::sendPostedEvents() and setMinimumSize() black
@@ -32,7 +29,7 @@ StreamElementsWidgetManager::~StreamElementsWidgetManager()
 // QApplication::sendPostedEvents().
 // Then we reset the new central widget minimum size to 0x0.
 //
-void StreamElementsWidgetManager::PushCentralWidget(QWidget* widget)
+void StreamElementsWidgetManager::PushCentralWidget(QWidget *widget)
 {
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
@@ -136,11 +133,8 @@ void StreamElementsWidgetManager::OnObsExit()
 }
 
 bool StreamElementsWidgetManager::AddDockWidget(
-	const char* const id,
-	const char* const title,
-	QWidget* const widget,
-	const Qt::DockWidgetArea area,
-	const Qt::DockWidgetAreas allowedAreas,
+	const char *const id, const char *const title, QWidget *const widget,
+	const Qt::DockWidgetArea area, const Qt::DockWidgetAreas allowedAreas,
 	const QDockWidget::DockWidgetFeatures features)
 {
 	assert(id);
@@ -155,14 +149,16 @@ bool StreamElementsWidgetManager::AddDockWidget(
 
 	class TrackedDockWidget : public QDockWidget {
 	public:
-		TrackedDockWidget(const QString &title, QWidget *parent = Q_NULLPTR,
-				   Qt::WindowFlags flags = Qt::WindowFlags())
+		TrackedDockWidget(const QString &title,
+				  QWidget *parent = Q_NULLPTR,
+				  Qt::WindowFlags flags = Qt::WindowFlags())
 			: QDockWidget(title, parent, flags)
 		{
 		}
 
 	protected:
-		virtual void resizeEvent(QResizeEvent *event) override {
+		virtual void resizeEvent(QResizeEvent *event) override
+		{
 			QDockWidget::resizeEvent(event);
 
 			AdviseHostUserInterfaceStateChanged();
@@ -198,33 +194,44 @@ bool StreamElementsWidgetManager::AddDockWidget(
 
 	std::string savedId = id;
 
-	QObject::connect(dock, &QDockWidget::dockLocationChanged, [savedId, dock, this](Qt::DockWidgetArea area) {
-		std::lock_guard<std::recursive_mutex> guard(m_mutex);
+	QObject::connect(
+		dock, &QDockWidget::dockLocationChanged,
+		[savedId, dock, this](Qt::DockWidgetArea area) {
+			std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
-		if (!m_dockWidgets.count(savedId)) {
-			return;
-		}
+			if (!m_dockWidgets.count(savedId)) {
+				return;
+			}
 
-		m_dockWidgetAreas[savedId] = area;
+			m_dockWidgetAreas[savedId] = area;
 
-		QtPostTask([](void*) -> void {
-			StreamElementsGlobalStateManager::GetInstance()->PersistState();
-		}, nullptr);
-	});
+			QtPostTask(
+				[](void *) -> void {
+					StreamElementsGlobalStateManager::
+						GetInstance()
+							->PersistState();
+				},
+				nullptr);
+		});
 
 	QObject::connect(dock, &QDockWidget::visibilityChanged, [this]() {
 		std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
-		QtPostTask([](void*) -> void {
-			StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
-			StreamElementsGlobalStateManager::GetInstance()->PersistState();
-		}, nullptr);
+		QtPostTask(
+			[](void *) -> void {
+				StreamElementsGlobalStateManager::GetInstance()
+					->GetMenuManager()
+					->Update();
+				StreamElementsGlobalStateManager::GetInstance()
+					->PersistState();
+			},
+			nullptr);
 	});
 
 	return true;
 }
 
-bool StreamElementsWidgetManager::ToggleWidgetFloatingStateById(const char* const id)
+bool StreamElementsWidgetManager::ShowWidgetById(const char *const id)
 {
 	assert(id);
 
@@ -234,14 +241,47 @@ bool StreamElementsWidgetManager::ToggleWidgetFloatingStateById(const char* cons
 		return false;
 	}
 
-	QDockWidget* dock = m_dockWidgets[id];
+	QDockWidget *dock = m_dockWidgets[id];
+
+	dock->setVisible(true);
+}
+
+bool StreamElementsWidgetManager::HideWidgetById(const char *const id)
+{
+	assert(id);
+
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
+	if (!m_dockWidgets.count(id)) {
+		return false;
+	}
+
+	QDockWidget *dock = m_dockWidgets[id];
+
+	dock->setVisible(false);
+}
+
+bool StreamElementsWidgetManager::ToggleWidgetFloatingStateById(
+	const char *const id)
+{
+	assert(id);
+
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
+	if (!m_dockWidgets.count(id)) {
+		return false;
+	}
+
+	QDockWidget *dock = m_dockWidgets[id];
 
 	dock->setFloating(!dock->isFloating());
 
 	return true;
 }
 
-bool StreamElementsWidgetManager::SetWidgetDimensionsById(const char* const id, const int width, const int height)
+bool StreamElementsWidgetManager::SetWidgetDimensionsById(const char *const id,
+							  const int width,
+							  const int height)
 {
 	assert(id);
 
@@ -251,7 +291,7 @@ bool StreamElementsWidgetManager::SetWidgetDimensionsById(const char* const id, 
 		return false;
 	}
 
-	QDockWidget* dock = m_dockWidgets[id];
+	QDockWidget *dock = m_dockWidgets[id];
 
 	if (!dock->isFloating() || !dock->window()) {
 		return false;
@@ -280,7 +320,9 @@ bool StreamElementsWidgetManager::SetWidgetDimensionsById(const char* const id, 
 	return true;
 }
 
-bool StreamElementsWidgetManager::SetWidgetPositionById(const char* const id, const int left, const int top)
+bool StreamElementsWidgetManager::SetWidgetPositionById(const char *const id,
+							const int left,
+							const int top)
 {
 	assert(id);
 
@@ -290,7 +332,7 @@ bool StreamElementsWidgetManager::SetWidgetPositionById(const char* const id, co
 		return false;
 	}
 
-	QDockWidget* dock = m_dockWidgets[id];
+	QDockWidget *dock = m_dockWidgets[id];
 
 	if (!dock->isFloating() || !dock->window()) {
 		return false;
@@ -311,7 +353,7 @@ bool StreamElementsWidgetManager::SetWidgetPositionById(const char* const id, co
 	return true;
 }
 
-bool StreamElementsWidgetManager::RemoveDockWidget(const char* const id)
+bool StreamElementsWidgetManager::RemoveDockWidget(const char *const id)
 {
 	assert(id);
 
@@ -321,7 +363,7 @@ bool StreamElementsWidgetManager::RemoveDockWidget(const char* const id)
 		return false;
 	}
 
-	QDockWidget* dock = m_dockWidgets[id];
+	QDockWidget *dock = m_dockWidgets[id];
 
 	m_dockWidgets.erase(id);
 	m_dockWidgetAreas.erase(id);
@@ -333,7 +375,8 @@ bool StreamElementsWidgetManager::RemoveDockWidget(const char* const id)
 	return true;
 }
 
-void StreamElementsWidgetManager::GetDockWidgetIdentifiers(std::vector<std::string>& result)
+void StreamElementsWidgetManager::GetDockWidgetIdentifiers(
+	std::vector<std::string> &result)
 {
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
@@ -342,7 +385,7 @@ void StreamElementsWidgetManager::GetDockWidgetIdentifiers(std::vector<std::stri
 	}
 }
 
-QDockWidget* StreamElementsWidgetManager::GetDockWidget(const char* const id)
+QDockWidget *StreamElementsWidgetManager::GetDockWidget(const char *const id)
 {
 	assert(id);
 
@@ -355,19 +398,21 @@ QDockWidget* StreamElementsWidgetManager::GetDockWidget(const char* const id)
 	return m_dockWidgets[id];
 }
 
-StreamElementsWidgetManager::DockWidgetInfo* StreamElementsWidgetManager::GetDockWidgetInfo(const char* const id)
+StreamElementsWidgetManager::DockWidgetInfo *
+StreamElementsWidgetManager::GetDockWidgetInfo(const char *const id)
 {
 	assert(id);
 
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
-	QDockWidget* dockWidget = GetDockWidget(id);
+	QDockWidget *dockWidget = GetDockWidget(id);
 
 	if (!dockWidget) {
 		return nullptr;
 	}
 
-	StreamElementsWidgetManager::DockWidgetInfo* result = new StreamElementsWidgetManager::DockWidgetInfo();
+	StreamElementsWidgetManager::DockWidgetInfo *result =
+		new StreamElementsWidgetManager::DockWidgetInfo();
 
 	result->m_widget = dockWidget->widget();
 
@@ -378,8 +423,7 @@ StreamElementsWidgetManager::DockWidgetInfo* StreamElementsWidgetManager::GetDoc
 	if (dockWidget->isFloating()) {
 		result->m_dockingArea = "floating";
 	} else {
-		switch (m_dockWidgetAreas[id])
-		{
+		switch (m_dockWidgetAreas[id]) {
 		case Qt::LeftDockWidgetArea:
 			result->m_dockingArea = "left";
 			break;
@@ -402,7 +446,7 @@ StreamElementsWidgetManager::DockWidgetInfo* StreamElementsWidgetManager::GetDoc
 	return result;
 }
 
-void StreamElementsWidgetManager::SerializeDockingWidgets(std::string& output)
+void StreamElementsWidgetManager::SerializeDockingWidgets(std::string &output)
 {
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
@@ -411,19 +455,18 @@ void StreamElementsWidgetManager::SerializeDockingWidgets(std::string& output)
 	SerializeDockingWidgets(root);
 
 	// Convert data to JSON
-	CefString jsonString =
-		CefWriteJSON(root, JSON_WRITER_DEFAULT);
+	CefString jsonString = CefWriteJSON(root, JSON_WRITER_DEFAULT);
 
 	output = jsonString.ToString();
 }
 
-void StreamElementsWidgetManager::DeserializeDockingWidgets(std::string& input)
+void StreamElementsWidgetManager::DeserializeDockingWidgets(std::string &input)
 {
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	// Convert JSON string to CefValue
-	CefRefPtr<CefValue> root =
-		CefParseJSON(CefString(input), JSON_PARSER_ALLOW_TRAILING_COMMAS);
+	CefRefPtr<CefValue> root = CefParseJSON(
+		CefString(input), JSON_PARSER_ALLOW_TRAILING_COMMAS);
 
 	DeserializeDockingWidgets(root);
 }
@@ -451,7 +494,8 @@ void StreamElementsWidgetManager::RestoreDockWidgetsGeometry()
 
 	for (auto iter : m_dockWidgetSavedMinSize) {
 		if (m_dockWidgets.count(iter.first)) {
-			maxSize[iter.first] = m_dockWidgets[iter.first]->maximumSize();
+			maxSize[iter.first] =
+				m_dockWidgets[iter.first]->maximumSize();
 
 			m_dockWidgets[iter.first]->setMinimumSize(iter.second);
 			m_dockWidgets[iter.first]->setMaximumSize(iter.second);
@@ -463,7 +507,8 @@ void StreamElementsWidgetManager::RestoreDockWidgetsGeometry()
 	for (auto iter : m_dockWidgetSavedMinSize) {
 		if (m_dockWidgets.count(iter.first)) {
 			m_dockWidgets[iter.first]->setMinimumSize(QSize(0, 0));
-			m_dockWidgets[iter.first]->setMaximumSize(maxSize[iter.first]);
+			m_dockWidgets[iter.first]->setMaximumSize(
+				maxSize[iter.first]);
 		}
 	}
 
