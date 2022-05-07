@@ -51,6 +51,6 @@
             }
         }
     },
-    "name": "obs-plugintemplate",
+    "name": "obs-plugin-using-browser-demo",
     "version": "1.0.0"
 }

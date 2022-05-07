@@ -20,17 +20,26 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "plugin-macros.generated.h"
 
+#include "obs-browser.hpp"
+#include "DemoObject.hpp"
+
+
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
 bool obs_module_load(void)
 {
-	blog(LOG_INFO, "plugin loaded successfully (version %s)",
-	     PLUGIN_VERSION);
-	return true;
+    blog(LOG_INFO, "plugin loaded successfully (version %s)",
+         PLUGIN_VERSION);
+    blog(LOG_INFO, "obs browser version: %d", obs::browser::version());
+
+    demo::DemoObject::initialize();
+
+    return true;
 }
 
 void obs_module_unload()
 {
 	blog(LOG_INFO, "plugin unloaded");
+    demo::DemoObject::finalize();
 }
