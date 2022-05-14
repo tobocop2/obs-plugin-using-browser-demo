@@ -1,0 +1,8 @@
+{
+  "name": "obs-plugin-using-browser-demo",
+  "version-string": "1.0.0",
+  "dependencies": [
+    "libuv",
+    "nlohmann-json"
+  ]
+}

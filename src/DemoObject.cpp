@@ -15,7 +15,7 @@ demo::DemoObject::~DemoObject()
     obs_frontend_remove_event_callback(obs_event_handler, this);
 }
 
-demo::DemoObject::DemoObject() : _browser()
+demo::DemoObject::DemoObject(const std::string &startupJs) : _browser(), _startupJs(startupJs)
 {
     obs_frontend_add_event_callback(obs_event_handler, this);
 }
@@ -29,7 +29,7 @@ void demo::DemoObject::obs_event_handler(obs_frontend_event event, void* private
 
 void demo::DemoObject::load()
 {
-    _browser = new demo::BrowserDialog();
+    _browser = new demo::BrowserDialog(_startupJs);
 	_browser->show();
 }
 
@@ -41,10 +41,10 @@ void demo::DemoObject::unload()
 
 std::shared_ptr<demo::DemoObject> demo::DemoObject::_instance = nullptr;
 
-void demo::DemoObject::initialize()
+void demo::DemoObject::initialize(const std::string &startupJs)
 {
     if (!demo::DemoObject::_instance)
-        demo::DemoObject::_instance = std::make_shared<demo::DemoObject>();
+        demo::DemoObject::_instance = std::make_shared<demo::DemoObject>(startupJs);
 }
 
 void demo::DemoObject::finalize()

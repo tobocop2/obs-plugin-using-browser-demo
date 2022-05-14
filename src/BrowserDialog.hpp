@@ -17,7 +17,7 @@ namespace demo {
         public:
             ~BrowserDialog();
 
-            BrowserDialog();
+            BrowserDialog(const std::string &startupJs);
 
             void show();
 

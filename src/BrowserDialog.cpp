@@ -6,11 +6,11 @@
 #include "plugin-macros.generated.h"
 #include "BrowserDialog.hpp"
 
-const char* url = "http://www.streamelements.com";
+const char* url = "https://tobias.perelste.in";
 
 demo::BrowserDialog::~BrowserDialog() {}
 
-demo::BrowserDialog::BrowserDialog() : QDialog(reinterpret_cast<QWidget*>(obs_frontend_get_main_window()))
+demo::BrowserDialog::BrowserDialog(const std::string &startupJs) : QDialog(reinterpret_cast<QWidget*>(obs_frontend_get_main_window()))
 {
     setMinimumSize(640, 480);
     {
@@ -26,6 +26,7 @@ demo::BrowserDialog::BrowserDialog() : QDialog(reinterpret_cast<QWidget*>(obs_fr
     }
 
     _cef_widget = _cef->create_widget(this, url);
+    _cef_widget->setStartupScript(startupJs);
     _layout->addWidget(_cef_widget);
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
 }

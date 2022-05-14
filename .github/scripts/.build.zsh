@@ -172,7 +172,9 @@ Usage: %B${functrace[1]%:*}%b <option> [<options>]
       ;;
   }
 
+  set -x
   cmake -S . -B build_${target} -G Ninja ${cmake_args}
+  set +x
 
   local -a cmake_args=()
   if (( _loglevel > 1 )) cmake_args+=(--verbose)

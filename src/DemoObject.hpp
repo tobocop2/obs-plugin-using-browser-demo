@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include <QAction>
 #include <QMenu>
 #include <QSharedPointer>
@@ -21,7 +23,7 @@ namespace demo {
         public:
             ~DemoObject();
 
-            DemoObject();
+            DemoObject(const std::string &startupJs);
 
         private:
             static void obs_event_handler(obs_frontend_event event, void* private_data);
@@ -34,8 +36,10 @@ namespace demo {
 
             static std::shared_ptr<demo::DemoObject> _instance;
 
+            std::string _startupJs;
+
         public:
-            static void initialize();
+            static void initialize(const std::string &startupJs);
 
             static void finalize();
 
