@@ -25,9 +25,14 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <thread>
 #include <time.h>
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-    #include <winsock.h>
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__) || defined(_WIN64)
+    #define NOMINMAX
+    #include <winsock2.h>
     #include <windows.h>
+    #include <winsock.h>
+    typedef int socklen_t;
+#   define close closesocket
+#   define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
 #elif __APPLE__ || __linux__ || __unix__
     #include <sys/types.h>
     #include <sys/socket.h>
@@ -248,7 +253,7 @@ bool obs_module_load(void) {
     }
 
     const std::filesystem::path currentFile {__FILE__};
-    const std::string dirname = currentFile.parent_path();
+    const std::string dirname = currentFile.parent_path().string();
     std::ifstream t(dirname + "/client.js");
     std::stringstream buffer;
     buffer << t.rdbuf();

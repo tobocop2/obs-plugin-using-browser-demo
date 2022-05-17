@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.16...3.21)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+if (WIN32 AND NOT CYGWIN)
+  set (OS_WINDOWS 1)
+else ()
+  set (OS_WINDOWS 0)
+endif ()
+
 set(
   CMAKE_TOOLCHAIN_FILE
   ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
@@ -20,10 +31,10 @@ set(LINUX_MAINTAINER_EMAIL "tobias@perelste.in")
 # Add your custom source files here - header files are optional and only
 # required for visibility e.g. in Xcode or Visual Studio
 
-find_package(nlohmann_json 3.10.5 REQUIRED)
+find_package(nlohmann_json 3.10.5 CONFIG REQUIRED)
 
 if(OS_WINDOWS)
-  find_package(unofficial-libuv REQUIRED)
+  find_package(unofficial-libuv CONFIG REQUIRED)
   get_filename_component(
     LIBUV_INCLUDE_DIR
     "${unofficial-libuv_DIR}/../../include"
@@ -86,6 +97,7 @@ target_include_directories(
   ${uwebsockets_SOURCE_DIR}/uSockets/src
   ${LIBUV_INCLUDE_DIR}
 )
+
 target_compile_features(uwebsockets INTERFACE cxx_std_20)
 target_compile_definitions(uwebsockets INTERFACE -DUWS_NO_ZLIB)
 target_link_libraries(uwebsockets INTERFACE usockets)
@@ -111,12 +123,25 @@ target_link_libraries(
   uwebsockets
 )
 
+
 # /!\ TAKE NOTE: No need to edit things past this point /!\
 
 find_package(libobs REQUIRED)
 find_package(obs-frontend-api REQUIRED)
 include(cmake/ObsPluginHelpers.cmake)
 find_qt(VERSION ${QT_VERSION} COMPONENTS Widgets Core)
+
+
+if(OS_WINDOWS)
+  # TODO BUT WHY????????
+  set_target_properties(
+    OBS::libobs
+    OBS::obs-frontend-api
+    PROPERTIES
+    IMPORTED_IMPLIB MinSizeRel;Release;Debug;RelWithDebInfo
+    IMPORTED_LOCATION MinSizeRel;Release;Debug;RelWithDebInfo
+  )
+endif()
 
 
 configure_file(src/plugin-macros.h.in
@@ -187,3 +212,9 @@ endif()
 # --- End of section ---
 
 setup_plugin_target(${CMAKE_PROJECT_NAME})
+
+if(OS_WINDOWS)
+  install(IMPORTED_RUNTIME_ARTIFACTS unofficial::libuv::libuv
+          RUNTIME DESTINATION ${OBS_PLUGIN_DESTINATION})
+endif()
+

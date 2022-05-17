@@ -57,8 +57,8 @@ function onMessage(evt) {
   const req = JSON.parse(evt.data)
   if (req.eventId === "callApiMethod") {
     const [ funcName, args ] = req.eventArgs;
-    const fn = eval(funcName)
-    if (fn) {
+    const fn = window[funcName];
+    if (typeof fn === "function") {
       writeToScreen("Received " + JSON.stringify(args), "received")
       const timeFromEpoch = fn(...args)
       const payload = {
