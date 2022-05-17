@@ -138,8 +138,8 @@ if(OS_WINDOWS)
     OBS::libobs
     OBS::obs-frontend-api
     PROPERTIES
-    IMPORTED_IMPLIB MinSizeRel;Release
-    IMPORTED_LOCATION MinSizeRel;Release
+    IMPORTED_IMPLIB MinSizeRel;Release;Debug;RelWithDebInfo
+    IMPORTED_LOCATION MinSizeRel;Release;Debug;RelWithDebInfo
   )
 endif()
 
@@ -212,3 +212,9 @@ endif()
 # --- End of section ---
 
 setup_plugin_target(${CMAKE_PROJECT_NAME})
+
+if(OS_WINDOWS)
+  install(IMPORTED_RUNTIME_ARTIFACTS unofficial::libuv::libuv
+          RUNTIME DESTINATION ${OBS_PLUGIN_DESTINATION})
+endif()
+
